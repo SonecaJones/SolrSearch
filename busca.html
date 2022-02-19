@@ -1,0 +1,287 @@
+<html lang="pt-br">
+<head>
+<title>Solr Search</title>
+<style>
+    body {
+        font-family:Verdana, Geneva, Tahoma, sans-serif;
+        text-align: center;
+        align-items: center;
+        align-self: center;
+    }
+    table.outertable{
+        background: black;
+        margin: 2px auto;
+        max-width: 90%;
+        align-items: center;
+    }
+    td{
+        padding: 3px;
+    }
+    a:link {
+        color: black;
+        text-decoration: none;
+    }
+    a:hover {
+        text-decoration: underline;
+    }
+    a:visited {
+        color: darkblue;
+    }
+    tr.rows:nth-child(odd){
+        background: white;
+    }
+    tr.rows:nth-child(even){
+        background: lightgray;
+    }
+    .total{
+        background: darkgray;
+        font-weight: bold;
+    }
+    .txtfile {
+        font-size:smaller;
+    }
+    .txtcont {
+        font-size:smaller;
+    }
+    .texto {
+        white-space: pre-wrap;
+        line-break: strict;
+        word-break: break-word;  
+        max-width: 99%;   
+    }
+    em {
+        color: red;
+    }
+    img{
+        margin-right: 5px;
+    }
+    input[name="query"]{
+        width: 60%;
+    }
+    #lstIndex {
+        font-size:smaller;
+        color: red;
+    }
+
+    .lstIndex {
+        font-size:smaller;
+        color: red;
+    }
+
+    .ignoreTags br { display: none; }
+    .ignoreTags p  { display: inline; margin: 0; }
+    .ignoreTags b  { font-weight: normal; }
+</style>
+<script language="Javascript">
+var jLResult = "";
+var lTexto;
+var dtlstIndex = null;
+
+function xmlhttpPost() {
+    var xmlHttpReq = false;
+    var self = this;
+    var strURL = "Core/select";
+
+    document.getElementById("result").innerHTML = "<img src=\"img/loader-light.gif\">PESQUISANDO!";
+
+    if (window.XMLHttpRequest) { // Mozilla/Safari
+        self.xmlHttpReq = new XMLHttpRequest();
+    }
+    else if (window.ActiveXObject) { // IE
+        self.xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    self.xmlHttpReq.open('POST', strURL, true);
+    self.xmlHttpReq.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    self.xmlHttpReq.onreadystatechange = function() {
+        if (self.xmlHttpReq.readyState == 4) {
+            updatepage(self.xmlHttpReq.responseText);
+        }
+    }
+
+    var params = getstandardargs().concat(getquerystring());
+    var strData = params.join('&');
+     
+    self.xmlHttpReq.send(strData);
+
+}
+
+function getstandardargs() {
+    var params = [
+        'df=text'
+        , 'fl=id,text,absolutePath'
+        , 'hl.fl=absolutePath,text'
+        , 'hl=on'
+        , 'rows=20'
+        ];
+
+    return params;
+}
+function getquerystring() {
+  var form = document.forms['f1'];
+  var query = form.query.value;
+  //qstr = 'q=' + escape('(text:' + query + ' OR *' + query + '*) OR (absolutePath:' + query + ' OR *' + query + '*)');
+  //qstr = 'q=' + encodeURI('(text:' + query + ') OR (absolutePath:' + query + ')');
+  qstr = 'q=' + encodeURI('(text:' + query + ')');
+  return qstr;
+}
+
+function copyToClp(txt){
+    //alert(txt);
+    txt = document.createTextNode(txt);
+    var m = document;
+    var w = window;
+    var b = m.body;
+    b.appendChild(txt);
+    if (b.createTextRange) {
+        var d = b.createTextRange();
+        d.moveToElementText(txt);
+        d.select();
+        m.execCommand('copy');
+    } 
+    else {
+        var d = m.createRange();
+        var g = w.getSelection;
+        d.selectNodeContents(txt);
+        g().removeAllRanges();
+        g().addRange(d);
+        m.execCommand('copy');
+        g().removeAllRanges();
+    }
+    txt.remove();
+    alert("Caminho da pasta copiado para \u00e0rea de transfer\u00eancia!");
+}
+
+// this function does all the work of parsing the solr response and updating the page.
+function updatepage(str){
+  var er = 1;
+  var rsp = "";
+  //document.getElementById("raw").innerHTML = str;
+  try  {
+        rsp = JSON.parse(str);
+    } catch (e) {
+        //console.error(e.message);
+        er = null;
+  }
+  //var rsp = eval("("+str+")"); // use eval to parse Solr's JSON response
+  if (er != null) {
+    this.jLResult = rsp;
+    var html = "<table class=\"outertable\">";
+    var docs = rsp.response.docs;
+    var hl = rsp.highlighting;
+    var i;
+    for (i = 0; i < docs.length; i++){
+        html+= "<tr class=\"rows\"><td><table class=\"innertable\">";
+        var icon = docs[i].absolutePath.substr(docs[i].absolutePath.lastIndexOf(".")+1) + ".png";
+        var aPath = docs[i].absolutePath.replace("Z:\\","\\\\192.168.3.40\\nip\\");
+        var aFolder = aPath;
+        aFolder = aFolder.substr(0, aFolder.lastIndexOf("\\"));
+        aFolder = "file:" + aFolder.replace(/\\/g,"/");
+        aFolder = escape(aFolder);
+        //html += "<tr><td><a href='file:" + aFolder.replace(/\\/g,"/") + "'><img src=\"img/filetypes/" + icon.toLocaleLowerCase() + "\"  onerror=\"this.src='img/filetypes/chm.png'\">" + aPath + "&nbsp;<img src=\"img/ico/folder.png\" title=\"Abrir pasta\"></a></td></tr>";
+        //html += "<tr><td><a href=\"javascript:copyToClp('file:" + aFolder.replace(/\\/g,"/") + "');\"><img src=\"img/filetypes/" + icon.toLocaleLowerCase() + "\"  onerror=\"this.src='img/filetypes/chm.png'\">" + aPath + "&nbsp;<img src=\"img/ico/folder.png\" title=\"Abrir pasta\"></a></td></tr>";
+        if((aPath.indexOf("SISPF") < 0) && (aPath.indexOf("SISCART") < 0)) {
+            html += "<tr><td id=\"tit" + i + "\"><a title='Clique para copiar o caminho da pasta do arquivo!' href=\'javascript:copyToClp(\"" + aFolder + "\");\'><img src=\"img/filetypes/" + icon.toLocaleLowerCase() + "\"  onerror=\"this.src='img/filetypes/chm.png'\">" + aPath + "&nbsp;<img src=\"img/ico/folder.png\"></a></td></tr>";
+        } else {
+            html += "<tr><td id=\"tit" + i + "\"><img src=\"img/filetypes/chm.png\">" + aPath + "&nbsp;</td></tr>";
+        }
+        if (hl[docs[i].id].absolutePath != null) { 
+            html += "<tr><td class=\"txtfile\"><b>Nome do arquivo: </b>" + hl[docs[i].id].absolutePath + "</td></tr>"; 
+        }
+        if (hl[docs[i].id].text != null) { 
+            if((aPath.indexOf("SISPF") < 0) && (aPath.indexOf("SISCART") < 0)) {
+                html += "<tr><td class=\"txtcont\"><a href=\"javascript:mostraTexto(" + i + ")\" title=\"Mostrar/oculta texto do arquivo\"><img src=\"img/ico/plus-button.png\"><b>Conteudo parcial: </b>" + hl[docs[i].id].text + "</a></td></tr>"; 
+            }
+            else {
+                html += "<tr><td class=\"txtcont\"><a href=\"javascript:mostraTexto(" + i + ")\" title=\"Mostrar/oculta texto do arquivo\"><img src=\"img/ico/plus-button.png\"><b>Conteudo parcial: </b>" + unescape((hl[docs[i].id].text+'').replace(/\+/g, '%20')) + "</a></td></tr>"; 
+            }
+        }
+        if((aPath.indexOf("SISPF") < 0) && (aPath.indexOf("SISCART") < 0)) {
+            html+= "<tr><td><pre><div id=\"texto" + i + "\" class=\"texto\"></div></pre></td></tr>";
+        } else {
+            html+= "<tr><td><div id=\"texto" + i + "\" class=\"texto\"></div></td></tr>";
+        }
+        html+= "</table></td></tr>";
+        }
+    /*var hl=rsp.highlighting[first.id];
+    if (hl.name != null) { html += "<br>name highlighted: " + hl.name[0]; }
+    if (hl.features != null) { html += "<br>features highligted: " + hl.features[0]; }*/
+    html+= "<tr><td class=\"total\">Total de documentos encontrados: " + rsp.response.numFound + " <br> Obs: S&atilde;o mostrados no m&aacute;ximo 20 resultados. Melhore sua busca para obter resultados mais espec&iacute;ficos.</td></tr></table>";
+  }
+  else {
+      html = "Erro no servidor. <br> Tente novamente mais tarde. <br> Erro: " + str;
+  }
+  document.getElementById("result").innerHTML = html;
+}
+
+function mostraTexto(i){
+    if ((this.lTexto != undefined) && (this.lTexto != null)){
+        document.getElementById("texto" + this.lTexto).innerHTML = "";
+    }
+    if (this.lTexto != i) {
+        if(jLResult.response.docs[i].absolutePath.indexOf("SISPF DOC") < 0) {
+            //alert(jLResult.response.docs[i].text);
+            document.getElementById("texto" + i).innerHTML = jLResult.response.docs[i].text.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, '');
+        } 
+        else{
+            document.getElementById("texto" + i).innerHTML = decodeURIComponent((jLResult.response.docs[i].text+'').replace(/\+/g, '%20'));
+        }
+        lTexto = i;
+        location.hash = "#" + "tit" + i;
+    } else {
+        lTexto = null;
+    }
+}
+
+function lstIndex() {
+    //http://localhost:8983/solr/admin/cores?action=STATUS&core=Core
+    if(dtlstIndex==null) {
+
+        var xmlHttpReq = false;
+        var self = this;
+        var strURL = "admin/cores";
+
+        if (window.XMLHttpRequest) { // Mozilla/Safari
+            self.xmlHttpReq = new XMLHttpRequest();
+        }
+        else if (window.ActiveXObject) { // IE
+            self.xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        self.xmlHttpReq.open('POST', strURL, true);
+        self.xmlHttpReq.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        self.xmlHttpReq.onreadystatechange = function() {
+            if (self.xmlHttpReq.readyState == 4) {
+                var rsp = JSON.parse(self.xmlHttpReq.responseText);
+                var iDocs = rsp.status.Core.index.numDocs;
+                var iTime = new Date(rsp.status.Core.index.lastModified);
+                document.getElementById("lstIndex").innerHTML = "<b>" + iDocs + "</b> registros indexados at&eacute;: " + iTime.toLocaleDateString() + " - " + iTime.toLocaleTimeString();        
+                //updatepage(self.xmlHttpReq.responseText);
+            }
+        }
+
+        self.xmlHttpReq.send("?action=STATUS&core=Core");
+
+    }
+}
+</script>
+</head>
+<body onload="lstIndex()">
+    <h1><img src="brain2.png" height="64px">
+        <br>Core</h1>
+        <div id="lstIndex"></div>        
+
+
+<form name="f1" onsubmit='xmlhttpPost(); return false;'>
+  <p>Texto para busca: <input name="query" type="text" pattern=".{4,}"   required title="Minimo de 4 caracteres">
+  <input value="Buscar" type="submit"></p>
+
+<div id="result">
+    <ol style="width: 90%;text-align: left;">
+        Search help or examples
+        <li>Sample</li>
+    </ol>
+</div>
+<p/>
+<!--pre>Resultados brutos: <div id="raw"></div></pre-->
+</form>
+</body>
+</html>
