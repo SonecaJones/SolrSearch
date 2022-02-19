@@ -1,6 +1,7 @@
 <html lang="pt-br">
 <head>
-<title>Solr Search</title>
+<title>Memoria NIP</title>
+<link rel="icon" type="image/x-icon" href="brain2.png">
 <style>
     body {
         font-family:Verdana, Geneva, Tahoma, sans-serif;
@@ -80,7 +81,7 @@ var dtlstIndex = null;
 function xmlhttpPost() {
     var xmlHttpReq = false;
     var self = this;
-    var strURL = "Core/select";
+    var strURL = "MemoriaNip/select";
 
     document.getElementById("result").innerHTML = "<img src=\"img/loader-light.gif\">PESQUISANDO!";
 
@@ -233,7 +234,7 @@ function mostraTexto(i){
 }
 
 function lstIndex() {
-    //http://localhost:8983/solr/admin/cores?action=STATUS&core=Core
+    //http://localhost:8983/solr/admin/cores?action=STATUS&core=MemoriaNip
     if(dtlstIndex==null) {
 
         var xmlHttpReq = false;
@@ -251,14 +252,14 @@ function lstIndex() {
         self.xmlHttpReq.onreadystatechange = function() {
             if (self.xmlHttpReq.readyState == 4) {
                 var rsp = JSON.parse(self.xmlHttpReq.responseText);
-                var iDocs = rsp.status.Core.index.numDocs;
-                var iTime = new Date(rsp.status.Core.index.lastModified);
+                var iDocs = rsp.status.MemoriaNip.index.numDocs;
+                var iTime = new Date(rsp.status.MemoriaNip.index.lastModified);
                 document.getElementById("lstIndex").innerHTML = "<b>" + iDocs + "</b> registros indexados at&eacute;: " + iTime.toLocaleDateString() + " - " + iTime.toLocaleTimeString();        
                 //updatepage(self.xmlHttpReq.responseText);
             }
         }
 
-        self.xmlHttpReq.send("?action=STATUS&core=Core");
+        self.xmlHttpReq.send("?action=STATUS&core=MemoriaNip");
 
     }
 }
@@ -266,8 +267,13 @@ function lstIndex() {
 </head>
 <body onload="lstIndex()">
     <h1><img src="brain2.png" height="64px">
-        <br>Core</h1>
-        <div id="lstIndex"></div>        
+        <br>Memoria NIP</h1>
+        <div id="lstIndex"></div>
+        <div class="lstIndex">
+        SISCART atualizado at&eacute;: 28/02/2020<br>
+        Arquivos GA atualizados at&eacute;:  04/11/2021<br>
+        SISPF atualizados todos os registros</div>
+        
 
 
 <form name="f1" onsubmit='xmlhttpPost(); return false;'>
@@ -276,8 +282,11 @@ function lstIndex() {
 
 <div id="result">
     <ol style="width: 90%;text-align: left;">
-        Search help or examples
-        <li>Sample</li>
+        Exemplos de busca:
+    <li>Alexsandro Viviani -> Busca por documentos que contenham as palavras Alexsandro e Viviani de forma abrangente</li>
+    <li>Alexsandro AND Viviani -> Busca por documentos que contenham as palavras Alexsandro e Viviani (AND tem que ser ma&iacute;usculo)</li>
+    <li>"Alexsandro Viviani" -> Busca por documentos que contenham a express&atilde;o "Alexsandro Viviani" de forma exata</li>
+    <li>NOT siscart OU NOT palavra -> Exclui documentos que contenham a palavra SISCART ou o termo desejado (NOT tem que ser ma&iacute;sculo)</li>
     </ol>
 </div>
 <p/>
